@@ -38,6 +38,7 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
 
 WORKDIR /usr/local/apache2/htdocs
 
+USER www-data
 STOPSIGNAL SIGWINCH
 HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck
 EXPOSE 80
