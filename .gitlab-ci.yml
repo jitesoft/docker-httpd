@@ -19,15 +19,13 @@ download:httpd:
     - HTTPD_VERSION=$(wget -qO - https://www-eu.apache.org/dist/httpd/ | grep -oP '(?<=\<a href=\"httpd-)([0-9]{0,2}(\.?){2}){2}([0-9]{0,2})' | awk '{print $1}' | uniq | sort -V -r | awk 'NR==1{print $1}')
     - echo "Version - ${HTTPD_VERSION}"
     - echo -e ${HTTPD_VERSION} > version.txt
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz -O httpd.tar.gz
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.sha256 -O httpd.tar.gz.sha256
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.asc -O httpd.tar.gz.asc
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz -O httpd-${HTTPD_VERSION}.tar.gz
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.sha256 -O httpd-${HTTPD_VERSION}.tar.gz.sha256
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.asc -O httpd-${HTTPD_VERSION}.tar.gz.asc
   artifacts:
     paths:
       - version.txt
-      - httpd.tar.gz
-      - httpd.tar.gz.sha256
-      - httpd.tar.gz.asc
+      - httpd*
     expire_in: 1 day
 
 gpg:import:
@@ -65,10 +63,11 @@ verify:
     - gpg:import
     - download:httpd
   script:
-    - cat httpd.tar.gz.sha256 | sha256sum -c -
-    - gpg --import keys.out
     - VERSION=$(cat version.txt)
-    - gpg --verify httpd.tar.gz.asc httpd.tar.gz
+    - cat httpd-${VERSION}.tar.gz.sha256 | sha256sum -c -
+    - gpg --import keys.out
+    - gpg --verify httpd-${VERSION}.tar.gz.asc httpd-${VERSION}.tar.gz
+    - mv httpd-${VERSION}.tar.gz httpd.tar.gz
   artifacts:
     expire_in: 1 day
     paths:
