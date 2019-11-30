@@ -1,12 +1,13 @@
+# syntax=docker/dockerfile:experimental
 FROM registry.gitlab.com/jitesoft/dockerfiles/alpine:latest
 ARG HTTPD_VERSION
 LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
       maintainer.org="Jitesoft" \
       maintainer.org.uri="https://jitesoft.com" \
       com.jitesoft.project.repo.type="git" \
-      com.jitesoft.project.repo.uri="https://gitlab.com/jitesoft/dockerfiles/apache-httpd" \
-      com.jitesoft.project.repo.issues="https://gitlab.com/jitesoft/dockerfiles/apache-httpd/issues" \
-      com.jitesoft.project.registry.uri="registry.gitlab.com/jitesoft/dockerfiles/apache-httpd" \
+      com.jitesoft.project.repo.uri="https://gitlab.com/jitesoft/dockerfiles/httpd" \
+      com.jitesoft.project.repo.issues="https://gitlab.com/jitesoft/dockerfiles/httpd/issues" \
+      com.jitesoft.project.registry.uri="registry.gitlab.com/jitesoft/dockerfiles/httpd" \
       com.jitesoft.app.httpd.version="${HTTPD_VERSION}"
 
 ARG TARGETARCH
