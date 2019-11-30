@@ -16,7 +16,7 @@ download:httpd:
   before_script:
     - apk add --no-cache wget grep
   script:
-    - HTTPD_VERSION=$(wget -qO - https://www-eu.apache.org/dist/httpd/ | grep -oP '(?<=\<a href=\"httpd-)([0-9]{0,2}(\.?){2}){2}([0-9]{0,2})' | awk '{print $1}' | uniq | sort -V -r)
+    - HTTPD_VERSION=$(wget -qO - https://www-eu.apache.org/dist/httpd/ | grep -oP '(?<=\<a href=\"httpd-)([0-9]{0,2}(\.?){2}){2}([0-9]{0,2})' | awk '{print $1}' | uniq | sort -V -r | awk 'NR==1{print $1}')
     - echo "Version - ${HTTPD_VERSION}"
     - echo -e ${HTTPD_VERSION} > version.txt
     - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz -O httpd.tar.gz
