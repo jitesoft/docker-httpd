@@ -130,7 +130,7 @@ containerize:
     - build:amd64
   script:
     - HTTPD_VERSION=$(cat out/version.txt)
-    - TAGS=$(helper "${CI_REGISTRY_IMAGE}" "${HTTPD_VERSION},latest,$(echo ${HTTPD_VERSION} | cut -d'.' -f1,2)")
+    - TAGS=$(helper "${CI_REGISTRY_IMAGE},jitesoft/httpd" "${HTTPD_VERSION},latest,$(echo ${HTTPD_VERSION} | cut -d'.' -f1,2)")
     - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg HTTPD_VERSION=${HTTPD_VERSION} .
   tags: [ jitesoft, buildx, protected ]
 
