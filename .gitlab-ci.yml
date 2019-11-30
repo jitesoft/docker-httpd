@@ -31,8 +31,6 @@ download:httpd:
     expire_in: 1 day
 
 gpg:import:
-  variables:
-    GIT_STRATEGY: none
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   stage: download
   script:
@@ -41,7 +39,7 @@ gpg:import:
         gpg --import keys.out
       fi
     - |
-      for key in `cat pgpkeys.txt`; do
+      for key in `cat gpg.txt`; do
         gpg --list-keys ${key} || (
           gpg --keyserver pgp.mit.edu --recv-keys "${key}" ||
           gpg --keyserver keyserver.pgp.com --recv-keys "${key}" ||
@@ -50,7 +48,7 @@ gpg:import:
       done
     - gpg --export > keys.out
   cache:
-    key: nginx.gpg.keyring
+    key: httpd.gpg.keyring
     paths:
       - keys.out
   artifacts:
