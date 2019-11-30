@@ -32,8 +32,8 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
   && sed -e 's!^(\s*CustomLog)\s+\S+!\1 /proc/self/fd/1!g' \
          -e 's!^(\s*ErrorLog)\s+\S+!\1 /proc/self/fd/2!g' \
          -e 's!^(\s*TransferLog)\s+\S+!\1 /proc/self/fd/1!g' \
-         "$HTTPD_PREFIX/conf/httpd.conf" \
-         "$HTTPD_PREFIX/conf/extra/httpd-ssl.conf"
+         "/usr/local/apache2/conf/httpd.conf" \
+         "/usr/local/apache2/conf/extra/httpd-ssl.conf"
 # ^ Make sure that output is caught by stdout and stderr (that is, the output from the logs).
 
 WORKDIR /usr/local/apache2/htdocs
