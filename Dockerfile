@@ -11,7 +11,7 @@ LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
       com.jitesoft.app.httpd.version="${HTTPD_VERSION}"
 
 ARG TARGETARCH
-COPY entrypoint /usr/local/entrypoint
+COPY entrypoint /usr/local/bin/entrypoint
 RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     addgroup -g 82 -S www-data \
  && adduser -u 82 -D -S -G www-data www-data \
@@ -25,11 +25,10 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     )" \
   && apk add --no-cache --virtual .runtime-deps apr-dev apr-util-dev apr-util-ldap perl ${RUNTIME_DEPENDENCIES} \
   && chown -R www-data:www-data /usr/local/apache2 \
-  && chmod +x /usr/local/entrypoint
+  && chmod +x /usr/local/bin/entrypoint
 
 WORKDIR /usr/local/apache2/htdocs
 
 STOPSIGNAL SIGWINCH
-USER www-data
 EXPOSE 80
 ENTRYPOINT [ "entrypoint" ]
