@@ -34,7 +34,7 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
          -e 's!^(\s*TransferLog)\s+\S+!\1 /proc/self/fd/1!g' \
          "/usr/local/apache2/conf/httpd.conf" \
          "/usr/local/apache2/conf/extra/httpd-ssl.conf" \
-  && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/httpd
+  && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/bin/httpd
 
 WORKDIR /usr/local/apache2/htdocs
 
