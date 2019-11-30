@@ -80,7 +80,7 @@ verify:
     - verify
   image: registry.gitlab.com/jitesoft/dockerfiles/alpine
   before_script:
-    - apk add --no-cache perl apr-util-ldap libxml2-dev tar apr-dev pcre-dev build-base gcc apr-util-dev lua-dev nghttp2-dev curl-dev openssl-dev jansson-dev brotli-dev zlib-dev libc-dev dpk-dev
+    - apk add --no-cache perl apr-util-ldap libxml2-dev tar apr-dev pcre-dev build-base gcc apr-util-dev lua-dev nghttp2-dev curl-dev openssl-dev jansson-dev brotli-dev zlib-dev libc-dev dpkg-dev
     - mkdir out src
   script:
     - tar -xzhf httpd.tar.gz -C src --strip-components=1
