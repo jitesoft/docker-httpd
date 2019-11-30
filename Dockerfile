@@ -25,7 +25,7 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
         | sort -u \
         | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
     )" \
-  && apk add --no-cache --virtual .runtime-deps apr-dev apr-util-dev apr-util-ldap perl ${RUNTIME_DEPENDENCIES} \
+  && apk add --no-cache --virtual .runtime-deps libcap apr-dev apr-util-dev apr-util-ldap perl ${RUNTIME_DEPENDENCIES} \
   && chown -R www-data:www-data /usr/local/apache2 \
   && chmod +x /usr/local/bin/entrypoint \
   && chmod +x /usr/local/bin/healthcheck \
