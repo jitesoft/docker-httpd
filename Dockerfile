@@ -33,8 +33,8 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
          -e 's!^(\s*ErrorLog)\s+\S+!\1 /proc/self/fd/2!g' \
          -e 's!^(\s*TransferLog)\s+\S+!\1 /proc/self/fd/1!g' \
          "/usr/local/apache2/conf/httpd.conf" \
-         "/usr/local/apache2/conf/extra/httpd-ssl.conf"
-# ^ Make sure that output is caught by stdout and stderr (that is, the output from the logs).
+         "/usr/local/apache2/conf/extra/httpd-ssl.conf" \
+  && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/httpd
 
 WORKDIR /usr/local/apache2/htdocs
 
