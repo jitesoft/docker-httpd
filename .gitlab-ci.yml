@@ -121,8 +121,8 @@ containerize:
   stage: containerize
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   needs:
-    - build:arm
-    - build:amd
+    - build:arm64
+    - build:amd64
   script:
     - HTTPD_VERSION=$(cat out/version.txt)
     - TAGS=$(helper "${CI_REGISTRY_IMAGE}" "${HTTPD_VERSION},latest,$(echo ${HTTPD_VERSION} | cut -d'.' -f1,2)")
