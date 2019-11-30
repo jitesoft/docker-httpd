@@ -11,7 +11,9 @@ LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
       com.jitesoft.app.httpd.version="${HTTPD_VERSION}"
 
 ARG TARGETARCH
+ENV PATH="/usr/local/apache2/bin:${PATH}"
 COPY entrypoint /usr/local/bin/entrypoint
+COPY healthcheck /usr/local/bin/healthcheck
 RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     addgroup -g 82 -S www-data \
  && adduser -u 82 -D -S -G www-data www-data \
@@ -25,10 +27,18 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     )" \
   && apk add --no-cache --virtual .runtime-deps apr-dev apr-util-dev apr-util-ldap perl ${RUNTIME_DEPENDENCIES} \
   && chown -R www-data:www-data /usr/local/apache2 \
-  && chmod +x /usr/local/bin/entrypoint
+  && chmod +x /usr/local/bin/entrypoint \
+  && chmod +x /usr/local/bin/healthcheck \
+  && sed -e 's!^(\s*CustomLog)\s+\S+!\1 /proc/self/fd/1!g' \
+         -e 's!^(\s*ErrorLog)\s+\S+!\1 /proc/self/fd/2!g' \
+         -e 's!^(\s*TransferLog)\s+\S+!\1 /proc/self/fd/1!g' \
+         "$HTTPD_PREFIX/conf/httpd.conf" \
+         "$HTTPD_PREFIX/conf/extra/httpd-ssl.conf"
+# ^ Make sure that output is caught by stdout and stderr (that is, the output from the logs).
 
 WORKDIR /usr/local/apache2/htdocs
 
 STOPSIGNAL SIGWINCH
+HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck
 EXPOSE 80
 ENTRYPOINT [ "entrypoint" ]

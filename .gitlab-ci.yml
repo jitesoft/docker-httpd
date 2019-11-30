@@ -78,10 +78,13 @@ verify:
   stage: build
   needs:
     - verify
-  image: registry.gitlab.com/jitesoft/dockerfiles/alpine
+  image: registry.gitlab.com/jitesoft/dockerfiles/alpine:latest
   before_script:
-    - apk add --no-cache perl apr-util-ldap libxml2-dev tar apr-dev pcre-dev build-base gcc apr-util-dev lua-dev nghttp2-dev curl-dev openssl-dev jansson-dev brotli-dev zlib-dev libc-dev dpkg-dev
+    - export CCACHE_DIR="${CI_PROJECT_DIR}/ccache"
+    - apk add --no-cache ccache perl apr-util-ldap libxml2-dev tar apr-dev pcre-dev build-base gcc apr-util-dev lua-dev nghttp2-dev curl-dev openssl-dev jansson-dev brotli-dev zlib-dev libc-dev dpkg-dev
     - mkdir out src
+    - export PATH="/usr/lib/ccache/bin:$PATH"
+    - if [ ! -d "ccache" ]; then mkdir ccache; fi
   script:
     - tar -xzhf httpd.tar.gz -C src --strip-components=1
     - cd src
@@ -90,6 +93,7 @@ verify:
     - make install
     - rm -r /usr/local/apache2/man /usr/local/apache2/manual
     - cd ..
+    - ccache -s
     - $(cd /usr/local/apache2 && tar -czf /tmp/httpd.tar.gz *)
     - mv version.txt out/version.txt
     - mv /tmp/httpd.tar.gz out/httpd-${ARCH}.tar.gz
@@ -97,6 +101,10 @@ verify:
     paths:
       - out
     expire_in: 1 day
+  cache:
+    paths:
+      - ccache
+    key: apache-httpd.build.ccache-${ARCH}
 
 build:arm64:
   extends: .build
