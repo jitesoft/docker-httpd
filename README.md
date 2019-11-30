@@ -2,6 +2,33 @@
 
 Apache httpd running on Alpine linux.
 
+
+## Notes and information
+
+### Usage
+
+Default docroot is set to `/usr/local/apache2/htdocs`.  
+
+To start container, expose the port (default is `80`) in the run command and go nuts:
+
+```bash
+docker run -p 80:80 jitesoft/httpd
+```
+
+### Cap and port 80.
+
+The container will use a none-root user (`www-data (82)`) to run the httpd executable.  
+To do this, the `net_bind_service` cap have been set for the httpd executable,
+this might create some issues for some docker filesystems. If it does, change
+the port of the vhost to a port above 1024 (like `8080`) and bind to that port instead
+of port `80`.
+
+### Sigwinch
+
+The stopsignal is set to SIGWINCH to enable graceful shutdown, this will make a
+`ctrl+c` exit of an attached container not exit but stay running. If you encounter this
+issue, a standard `docker stop <containername>` will stop the container for you.
+
 ## Tags
 
 Image is built for x86_64 and aarch64, tags are based on Apache httpd version

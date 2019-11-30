@@ -12,6 +12,7 @@ LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
 
 ARG TARGETARCH
 ENV PATH="/usr/local/apache2/bin:${PATH}"
+
 COPY entrypoint /usr/local/bin/entrypoint
 COPY healthcheck /usr/local/bin/healthcheck
 RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
@@ -19,6 +20,8 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
  && adduser -u 82 -D -S -G www-data www-data \
  && mkdir -p /usr/local/apache2 \
  && tar -xzhf /tmp/httpd-bin/httpd-${TARGETARCH}.tar.gz -C /usr/local/apache2 \
+ && touch /usr/local/apache2/logs/access_log \
+ && touch /usr/local/apache2/logs/error_log \
  && RUNTIME_DEPENDENCIES="$( \
     scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
         | tr ',' '\n' \
@@ -29,15 +32,11 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
   && chown -R www-data:www-data /usr/local/apache2 \
   && chmod +x /usr/local/bin/entrypoint \
   && chmod +x /usr/local/bin/healthcheck \
-  && sed -e 's!^(\s*CustomLog)\s+\S+!\1 /proc/self/fd/1!g' \
-         -e 's!^(\s*ErrorLog)\s+\S+!\1 /proc/self/fd/2!g' \
-         -e 's!^(\s*TransferLog)\s+\S+!\1 /proc/self/fd/1!g' \
-         "/usr/local/apache2/conf/httpd.conf" \
-         "/usr/local/apache2/conf/extra/httpd-ssl.conf" \
+  && ln -sf /proc/self/fd/1 /usr/local/apache2/logs/access_log \
+  && ln -sf /proc/self/fd/2 /usr/local/apache2/logs/error_log \
   && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/bin/httpd
 
 WORKDIR /usr/local/apache2/htdocs
-
 USER www-data
 STOPSIGNAL SIGWINCH
 HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck
