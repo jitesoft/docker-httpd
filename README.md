@@ -2,7 +2,6 @@
 
 Apache httpd running on Alpine linux.
 
-
 ## Notes and information
 
 ### Usage
@@ -34,15 +33,11 @@ issue, a standard `docker stop <containername>` will stop the container for you.
 Image is built for x86_64 and aarch64, tags are based on Apache httpd version
 where `latest` is the latest version as of build time.
 
-### GitLab
+Images can be found at:
 
-* `registry.gitlab.com/jitesoft/dockerfiles/httpd`
-    * `latest`, `2.4`, `2.4.x`
-
-### DockerHub
-
-* `jitesoft/httpd`
-    * `latest`, `2.4`, `2.4.x`
+* [Docker Hub](https://hub.docker.com/r/jitesoft/httpd): `jitesoft/httpd`
+* [GitLab](https://gitlab.com/jitesoft/dockerfiles/httpd): `registry.gitlab.com/jitesoft/dockerfiles/httpd`
+* [GitHub](https://github.com/orgs/jitesoft/packages/container/package/httpd) `ghcr.io/jitesoft/httpd`
 
 ## Docker files
 
