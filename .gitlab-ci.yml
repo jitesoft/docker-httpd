@@ -59,6 +59,8 @@ check:
   cache:
     policy: pull
     key: httpd.version
+    paths:
+      - version.txt
 
 scan:
   extends: .container_scanning
