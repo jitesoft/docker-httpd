@@ -17,18 +17,23 @@ gpg:import:
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
     - |
-      for key in `cat gpg.txt`; do
-        gpg --list-keys ${key} || (
-          gpg --keyserver pgp.mit.edu --recv-keys "${key}" ||
-          gpg --keyserver keyserver.pgp.com --recv-keys "${key}" ||
-          gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "${key}"
-        ) || echo "Failed to find key for id ${key}"
-      done
-    - gpg --export > keys.out
+      if [ "$(cat gpg-old.txt)" != "$(cat gpg.txt)" ]; then
+        for key in `cat gpg.txt`; do
+          gpg --list-keys ${key} || (
+            gpg --keyserver pgp.mit.edu --recv-keys "${key}" ||
+            gpg --keyserver keyserver.pgp.com --recv-keys "${key}" ||
+            gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "${key}"
+          ) || echo "Failed to find key for id ${key}"
+        done
+        gpg --export > keys.out
+      fi
+    - cp gpg.txt gpg-old.txt
   cache:
+    policy: pull-push
     key: httpd.gpg.keyring
     paths:
       - keys.out
+      - gpg-old.txt
 
 check:
   stage: pre
