@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
 FROM registry.gitlab.com/jitesoft/dockerfiles/alpine:latest
-ARG HTTPD_VERSION
+ARG VERSION
 LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
       maintainer.org="Jitesoft" \
       maintainer.org.uri="https://jitesoft.com" \
@@ -8,16 +8,17 @@ LABEL maintainer="Johannes Tegnér <johannes@jitesoft.com>" \
       com.jitesoft.project.repo.uri="https://gitlab.com/jitesoft/dockerfiles/httpd" \
       com.jitesoft.project.repo.issues="https://gitlab.com/jitesoft/dockerfiles/httpd/issues" \
       com.jitesoft.project.registry.uri="registry.gitlab.com/jitesoft/dockerfiles/httpd" \
-      com.jitesoft.app.httpd.version="${HTTPD_VERSION}"
+      com.jitesoft.app.httpd.version="${VERSION}"
 
 ARG TARGETARCH
 ENV PATH="/usr/local/apache2/bin:${PATH}"
+ARG WWWDATA_GUID="82"
+ENV WWWDATA_GUID="${WWWDATA_GUID}"
 
 COPY entrypoint /usr/local/bin/entrypoint
 COPY healthcheck /usr/local/bin/healthcheck
 RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
-    addgroup -g 82 -S www-data \
- && adduser -u 82 -D -S -G www-data www-data \
+    adduser -u ${WWWDATA_GUID} -D -S -G www-data www-data \
  && mkdir -p /usr/local/apache2 \
  && tar -xzhf /tmp/httpd-bin/httpd-${TARGETARCH}.tar.gz -C /usr/local/apache2 \
  && touch /usr/local/apache2/logs/access_log \
@@ -35,6 +36,7 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
   && ln -sf /proc/self/fd/1 /usr/local/apache2/logs/access_log \
   && ln -sf /proc/self/fd/2 /usr/local/apache2/logs/error_log \
   && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/bin/httpd
+# Todo: Reconsider cap_net_bind call.
 
 WORKDIR /usr/local/apache2/htdocs
 USER www-data

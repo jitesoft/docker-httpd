@@ -1,36 +1,19 @@
 include:
-  - https://gitlab.com/jitesoft/gitlab-ci-lib/raw/master/container_scan-v2.yml
+  - file: /Scan/trivy.yml
+    project: jitesoft/gitlab-ci-lib
 
 stages:
   - download
-  - verify
   - build
   - containerize
   - scan
 
-download:httpd:
-  variables:
-    GIT_STRATEGY: none
-  image: registry.gitlab.com/jitesoft/dockerfiles/alpine:latest
-  stage: download
-  before_script:
-    - apk add --no-cache wget grep
-  script:
-    - HTTPD_VERSION=$(wget -qO - https://www-eu.apache.org/dist/httpd/ | grep -oP '(?<=\<a href=\"httpd-)([0-9]{0,2}(\.?){2}){2}([0-9]{0,2})' | awk '{print $1}' | uniq | sort -V -r | awk 'NR==1{print $1}')
-    - echo "Version - ${HTTPD_VERSION}"
-    - echo -e ${HTTPD_VERSION} > version.txt
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz -O httpd-${HTTPD_VERSION}.tar.gz
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.sha256 -O httpd-${HTTPD_VERSION}.tar.gz.sha256
-    - wget https://www-eu.apache.org/dist/httpd/httpd-${HTTPD_VERSION}.tar.gz.asc -O httpd-${HTTPD_VERSION}.tar.gz.asc
-  artifacts:
-    paths:
-      - version.txt
-      - httpd*
-    expire_in: 1 day
-
 gpg:import:
+  stage: .pre
+  rules:
+    - changes:
+        - gpg.txt
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
-  stage: download
   script:
     - |
       if [ -f keys.out ]; then
@@ -49,36 +32,86 @@ gpg:import:
     key: httpd.gpg.keyring
     paths:
       - keys.out
-  artifacts:
-    paths:
-      - keys.out
-    expire_in: 1 day
 
-verify:
+check:
   variables:
     GIT_STRATEGY: none
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
-  stage: verify
-  needs:
-    - gpg:import
-    - download:httpd
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - when: never
   script:
-    - VERSION=$(cat version.txt)
-    - cat httpd-${VERSION}.tar.gz.sha256 | sha256sum -c -
+    - LATEST=$(wget -qO - https://www-eu.apache.org/dist/httpd/ | grep -oP '(?<=\<a href=\"httpd-)([0-9]{0,2}(\.?){2}){2}([0-9]{0,2})' | awk '{print $1}' | uniq | sort -V -r | awk 'NR==1{print $1}')
+    - echo "Latest ${LATEST}"
+    - touch version.txt
+    - |
+      if [ "${LATEST}" != "$(cat version.txt)" ] || [ -n "${FORCE_BUILD}" ] ; then
+        curl -F token=${CI_JOB_TOKEN} -F ref=master -F "variables[VERSION]=${LATEST}" -F "variables[BUILD]=true" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/trigger/pipeline
+      else
+        curl -F token=${CI_JOB_TOKEN} -F ref=master -F "variables[VERSION]=${LATEST}" -F "variables[SCAN]=true" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/trigger/pipeline
+      fi
+  cache:
+    policy: pull
+    key: httpd.version
+
+scan:
+  extends: .container_scanning
+  rules:
+    - if: "$SCAN"
+      when: always
+    - if: "$VERSION"
+      when: always
+    - when: never
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - |
+      if [ -n "${VERSION}" ]; then
+        SCANNING_IMAGE_NAME="${CI_REGISTRY_IMAGE}:${VERSION}"
+      else
+        SCANNING_IMAGE_NAME="${CI_REGISTRY_IMAGE}:$(cat version.txt)"
+      fi
+  cache:
+    policy: pull
+    key: httpd.version
+
+download:
+  rules:
+    - if: "$BUILD && $VERSION"
+      when: always
+    - when: never
+  variables:
+    GIT_STRATEGY: none
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
+  stage: download
+  script:
+    - echo "Building apache httpd version ${VERSION}"
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${VERSION}.tar.gz -O httpd-${VERSION}.tar.gz
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${VERSION}.tar.gz.sha256 -O httpd-${VERSION}.tar.gz.sha256
+    - wget https://www-eu.apache.org/dist/httpd/httpd-${VERSION}.tar.gz.asc -O httpd-${VERSION}.tar.gz.asc
     - gpg --import keys.out
     - gpg --verify httpd-${VERSION}.tar.gz.asc httpd-${VERSION}.tar.gz
     - mv httpd-${VERSION}.tar.gz httpd.tar.gz
   artifacts:
-    expire_in: 1 day
     paths:
-      - version.txt
       - httpd.tar.gz
+    expire_in: 1 day
+  cache:
+    policy: pull
+    key: httpd.gpg.keyring
 
 .build:
+  rules:
+    - if: "$BUILD && $VERSION"
+      when: on_success
+    - when: never
   stage: build
   needs:
-    - verify
-  image: registry.gitlab.com/jitesoft/dockerfiles/alpine:latest
+    - download
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc/buildbase:latest
   before_script:
     - export CCACHE_DIR="${CI_PROJECT_DIR}/ccache"
     - apk add --no-cache ccache perl apr-util-ldap libxml2-dev tar apr-dev pcre-dev build-base gcc apr-util-dev lua-dev nghttp2-dev curl-dev openssl-dev jansson-dev brotli-dev zlib-dev libc-dev dpkg-dev
@@ -95,7 +128,6 @@ verify:
     - cd ..
     - ccache -s
     - $(cd /usr/local/apache2 && tar -czf /tmp/httpd.tar.gz *)
-    - mv version.txt out/version.txt
     - mv /tmp/httpd.tar.gz out/httpd-${ARCH}.tar.gz
   artifacts:
     paths:
@@ -123,23 +155,34 @@ build:amd64:
     - native-amd64
 
 containerize:
+  rules:
+    - if: "$BUILD && $VERSION"
+      when: on_success
+    - when: never
   stage: containerize
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   needs:
     - build:arm64
     - build:amd64
   script:
-    - HTTPD_VERSION=$(cat out/version.txt)
-    - TAGS=$(helper "ghcr.io/jitesoft/httpd,${CI_REGISTRY_IMAGE},jitesoft/httpd" "${HTTPD_VERSION},latest,$(echo ${HTTPD_VERSION} | cut -d'.' -f1,2)")
-    - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg HTTPD_VERSION=${HTTPD_VERSION} .
-  tags: [ jitesoft, buildx, protected ]
+    - TAGS=$(helper "ghcr.io/jitesoft/httpd,${CI_REGISTRY_IMAGE},jitesoft/httpd" "${VERSION},latest,$(echo ${VERSION} | cut -d'.' -f1,2)")
+    - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg VERSION=${VERSION} .
+  tags: [ buildx, protected ]
 
-scan:2:
+create:cache:
+  rules:
+    - if: "$BUILD && $VERSION"
+      when: on_success
+    - when: never
   needs:
-    - containerize
-  extends: .container_scanning
-  variables:
-    SCANNING_IMAGE_NAME: "${CI_REGISTRY_IMAGE}:latest"
-    GIT_STRATEGY: none
-  tags:
-    - protected
+    - job: containerize
+      artifacts: false
+  stage: .post
+  image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
+  script:
+    - echo "${VERSION}" > version.txt
+  cache:
+    key: php-versions
+    policy: pull-push
+    paths:
+      - version.txt
