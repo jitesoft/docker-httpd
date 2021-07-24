@@ -3,13 +3,14 @@ include:
     project: jitesoft/gitlab-ci-lib
 
 stages:
+  - pre
   - download
   - build
   - containerize
   - scan
 
 gpg:import:
-  stage: .pre
+  stage: pre
   rules:
     - changes:
         - gpg.txt
@@ -34,7 +35,7 @@ gpg:import:
       - keys.out
 
 check:
-  stage: .pre
+  stage: pre
   variables:
     GIT_STRATEGY: none
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
