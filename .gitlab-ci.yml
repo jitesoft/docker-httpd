@@ -80,6 +80,8 @@ scan:
   cache:
     policy: pull
     key: httpd.version
+    paths:
+      - version.txt
 
 download:
   rules:
@@ -105,6 +107,8 @@ download:
   cache:
     policy: pull
     key: httpd.gpg.keyring
+    paths:
+      - keys.out
 
 .build:
   rules:
