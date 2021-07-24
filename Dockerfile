@@ -34,12 +34,9 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
   && chmod +x /usr/local/bin/entrypoint \
   && chmod +x /usr/local/bin/healthcheck \
   && ln -sf /proc/self/fd/1 /usr/local/apache2/logs/access_log \
-  && ln -sf /proc/self/fd/2 /usr/local/apache2/logs/error_log \
-  && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/apache2/bin/httpd
-# Todo: Reconsider cap_net_bind call.
+  && ln -sf /proc/self/fd/2 /usr/local/apache2/logs/error_log
 
 WORKDIR /usr/local/apache2/htdocs
-USER www-data
 STOPSIGNAL SIGWINCH
 HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck
 EXPOSE 80

@@ -14,13 +14,14 @@ To start container, expose the port (default is `80`) in the run command and go 
 docker run -p 80:80 jitesoft/httpd
 ```
 
-### Cap and port 80.
+### www-data user
 
-The container will use a none-root user (`www-data (82)`) to run the httpd executable.  
-To do this, the `net_bind_service` cap have been set for the httpd executable,
-this might create some issues for some docker filesystems. If it does, change
-the port of the vhost to a port above 1024 (like `8080`) and bind to that port instead
-of port `80`.
+The www-data user have the same id as the www-data user in the most common alpine images, 82.  
+Before 2021 07 23, the id was 1000, which created issues with read/write permissions
+when used with the jitesoft/php image.
+
+Containers created runs as root (easily changed in production with the appropriate flags),
+while the nginx process runs as the www-data user (82) by default.
 
 ### Sigwinch
 
@@ -43,11 +44,29 @@ Images can be found at:
 
 Docker files can be found at  [GitLab](https://gitlab.com/jitesoft/dockerfiles/httpd) or [GitHub](https://github.com/jitesoft/docker-httpd)
 
-### Image labels
-
-This image follows the [Jitesoft image label specification 1.0.0](https://gitlab.com/snippets/1866155).
-
 ## Licenses
 
 Files in this repository are released under the MIT license.  
 Httpd is released under the [Apache License 2.0](https://www.apache.org/licenses/) license.  
+
+### Image labels
+
+This image follows the [Jitesoft image label specification 1.0.0](https://gitlab.com/snippets/1866155).
+
+## Sponsors
+
+Sponsoring is vital for the further development and maintaining of open source projects.  
+Questions and sponsoring queries can be made via <a href="mailto:sponsor@jitesoft.com">email</a>.  
+If you wish to sponsor our projects, reach out to the email above or visit any of the following sites:
+
+[Open Collective](https://opencollective.com/jitesoft-open-source)  
+[GitHub Sponsors](https://github.com/sponsors/jitesoft)  
+[Patreon](https://www.patreon.com/jitesoft)
+
+Jitesoft images are built via GitLab CI on runners hosted by the following wonderful organisations:
+
+<a href="https://fosshost.org/">
+  <img src="https://raw.githubusercontent.com/jitesoft/misc/master/sponsors/fosshost.png" width="256" alt="Fosshost logo" />
+</a>
+
+_The companies above are not affiliated with Jitesoft or any Jitesoft Projects directly._
