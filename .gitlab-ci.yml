@@ -34,6 +34,7 @@ gpg:import:
       - keys.out
 
 check:
+  stage: .pre
   variables:
     GIT_STRATEGY: none
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
@@ -59,6 +60,7 @@ check:
 
 scan:
   extends: .container_scanning
+  stage: scan
   rules:
     - if: "$SCAN"
       when: always
