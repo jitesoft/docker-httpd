@@ -185,7 +185,7 @@ create:cache:
   script:
     - echo "${VERSION}" > version.txt
   cache:
-    key: php-versions
+    key: httpd.version
     policy: pull-push
     paths:
       - version.txt
