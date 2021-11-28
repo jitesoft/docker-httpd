@@ -19,7 +19,6 @@ gpg:import:
       when: always
     - changes:
         - gpg.txt
-      when: always
     - when: never
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
