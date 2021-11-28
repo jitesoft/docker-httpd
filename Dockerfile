@@ -15,11 +15,11 @@ ENV PATH="/usr/local/apache2/bin:${PATH}"
 ARG WWWDATA_GUID="82"
 ENV WWWDATA_GUID="${WWWDATA_GUID}"
 
-COPY entrypoint /usr/local/bin/entrypoint
-COPY healthcheck /usr/local/bin/healthcheck
 RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     adduser -u ${WWWDATA_GUID} -D -S -G www-data www-data \
  && mkdir -p /usr/local/apache2 \
+ && cp /tmp/httpd-bin/entrypoint /usr/local/bin/entrypoint-httpd \
+ && cp /tmp/httpd-bin/healthcheck /usr/local/bin/healthcheck-httpd \
  && tar -xzhf /tmp/httpd-bin/httpd-${TARGETARCH}.tar.gz -C /usr/local/apache2 \
  && touch /usr/local/apache2/logs/access_log \
  && touch /usr/local/apache2/logs/error_log \
@@ -31,13 +31,13 @@ RUN --mount=type=bind,source=./out,target=/tmp/httpd-bin \
     )" \
   && apk add --no-cache --virtual .runtime-deps libcap apr-dev apr-util-dev apr-util-ldap perl ${RUNTIME_DEPENDENCIES} \
   && chown -R www-data:www-data /usr/local/apache2 \
-  && chmod +x /usr/local/bin/entrypoint \
-  && chmod +x /usr/local/bin/healthcheck \
+  && chmod +x /usr/local/bin/entrypoint-httpd \
+  && chmod +x /usr/local/bin/healthcheck-httpd \
   && ln -sf /proc/self/fd/1 /usr/local/apache2/logs/access_log \
   && ln -sf /proc/self/fd/2 /usr/local/apache2/logs/error_log
 
 WORKDIR /usr/local/apache2/htdocs
 STOPSIGNAL SIGWINCH
-HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck
+HEALTHCHECK --interval=30s --timeout=5s CMD healthcheck-httpd
 EXPOSE 80
-ENTRYPOINT [ "entrypoint" ]
+ENTRYPOINT [ "entrypoint-httpd" ]
