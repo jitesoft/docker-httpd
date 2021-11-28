@@ -1,12 +1,15 @@
 include:
-  - file: /Scan/trivy.yml
-    project: jitesoft/gitlab-ci-lib
+  - project: jitesoft/gitlab-ci-lib
+    file: Scan/trivy.yml
+  - project: jitesoft/gitlab-ci-lib
+    file: OCI/sign.yml
 
 stages:
   - pre
   - download
   - build
   - containerize
+  - sign
   - scan
 
 gpg:import:
@@ -177,7 +180,26 @@ containerize:
   script:
     - TAGS=$(helper "ghcr.io/jitesoft/httpd,${CI_REGISTRY_IMAGE},jitesoft/httpd" "${VERSION},latest,$(echo ${VERSION} | cut -d'.' -f1,2)")
     - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg VERSION=${VERSION} .
+    - echo "SIGN_TAGS=${VERSION},latest,$(echo ${VERSION})" > sign.env
   tags: [ buildx, protected ]
+  artifacts:
+    reports:
+      dotenv: sign.env
+
+sign:
+  needs:
+    - job: containerize
+      artifacts: true
+  extends: .sign
+  tags: [ jitesoft, protected, buildx ]
+  stage: sign
+  variables:
+    COSIGN_ANNOTATIONS: "-a sig=jitesoft-bot"
+    SIGN_IMAGES: "jitesoft/httpd,${CI_REGISTRY_IMAGE},ghcr.io/jitesoft/httpd"
+  rules:
+    - if: "$BUILD"
+      when: on_success
+    - when: never
 
 create:cache:
   rules:
