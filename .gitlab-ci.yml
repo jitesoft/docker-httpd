@@ -15,8 +15,12 @@ stages:
 gpg:import:
   stage: pre
   rules:
+    - if: "$REKEY"
+      when: always
     - changes:
         - gpg.txt
+      when: always
+    - when: never
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   script:
     - |
@@ -33,6 +37,7 @@ gpg:import:
     - cp gpg.txt gpg-old.txt
   cache:
     policy: pull-push
+    when: on_success
     key: httpd.gpg.keyring
     paths:
       - keys.out
