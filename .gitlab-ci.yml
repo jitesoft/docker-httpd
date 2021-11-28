@@ -29,6 +29,7 @@ gpg:import:
           gpg --list-keys ${key} || (
             gpg --keyserver pgp.mit.edu --recv-keys "${key}" ||
             gpg --keyserver keyserver.pgp.com --recv-keys "${key}" ||
+            gpg --keyserver keyserver.ubuntu.com --recv-keys "${key}" ||
             gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "${key}"
           ) || echo "Failed to find key for id ${key}"
         done
