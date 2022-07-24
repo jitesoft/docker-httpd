@@ -186,7 +186,7 @@ containerize:
     - cp entrypoint out/
     - cp healthcheck out/
     - TAGS=$(helper "ghcr.io/jitesoft/httpd,${CI_REGISTRY_IMAGE},jitesoft/httpd" "${VERSION},latest,$(echo ${VERSION} | cut -d'.' -f1,2)")
-    - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg VERSION=${VERSION} .
+    - docker buildx build --platform linux/arm64,linux/amd64 --progress plain --push ${TAGS} --build-arg BUILD_TIME="$(date -Iseconds)" --build-arg VERSION=${VERSION} .
     - echo "SIGN_TAGS=${VERSION},latest,$(echo ${VERSION})" > sign.env
   tags: [ buildx, protected ]
   artifacts:
