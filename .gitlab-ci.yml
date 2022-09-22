@@ -121,7 +121,11 @@ download:
     paths:
       - keys.out
 
-.build:
+build:
+  parallel:
+    matrix:
+      - { ARCH: "arm64", GIT_STRATEGY: none }
+      - { ARCH: "amd64", GIT_STRATEGY: none }
   rules:
     - if: "$BUILD && $VERSION"
       when: on_success
@@ -155,22 +159,7 @@ download:
     paths:
       - ccache
     key: apache-httpd.build.ccache-${ARCH}
-
-build:arm64:
-  extends: .build
-  variables:
-    GIT_STRATEGY: none
-    ARCH: arm64
-  tags:
-    - native-aarch64
-
-build:amd64:
-  extends: .build
-  variables:
-    GIT_STRATEGY: none
-    ARCH: amd64
-  tags:
-    - native-amd64
+  tags: [ "native-${ARCH}" ]
 
 containerize:
   rules:
@@ -180,8 +169,8 @@ containerize:
   stage: containerize
   image: registry.gitlab.com/jitesoft/dockerfiles/misc:latest
   needs:
-    - build:arm64
-    - build:amd64
+    - job: build
+      artifacts: true
   script:
     - cp entrypoint out/
     - cp healthcheck out/
